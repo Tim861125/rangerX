@@ -72,7 +72,9 @@ just deploy-dry
 Cloudflare Dashboard 的 Git build 可使用：
 
 - Build command：`bun run build`
-- Deploy command：`bun run db:migrate:remote && bunx wrangler deploy`
+- Deploy command：`bun run db:migrate:remote && bunx wrangler pages deploy`
+
+`wrangler.jsonc` 是 Pages 的部署設定來源，並把遠端 D1 以 `DB` binding 綁定；請勿另外建立名稱為 `rangerx_db` 的重複 binding。
 
 ## 資料設計
 

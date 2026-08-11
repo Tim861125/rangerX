@@ -10,10 +10,13 @@ const rangerType = ref('all')
 const attribute = ref('all')
 const sort = ref<RangerSort>('newest')
 const page = ref(1)
+// During SSR this retains the current H3 event (including Cloudflare's D1
+// binding). The global $fetch creates a new local request without that context.
+const requestFetch = useRequestFetch()
 
 const { data: filterResponse } = await useAsyncData<RangerFiltersResponse>(
   'ranger-filters',
-  () => $fetch<RangerFiltersResponse>('/api/rangers/GetFilters' as string),
+  () => requestFetch<RangerFiltersResponse>('/api/rangers/GetFilters' as string),
 )
 
 const requestQuery = computed(() => ({
@@ -32,7 +35,7 @@ const {
   error,
 } = await useAsyncData<RangerListResponse>(
   'rangers',
-  () => $fetch<RangerListResponse>('/api/rangers/GetRangers' as string, { query: requestQuery.value }),
+  () => requestFetch<RangerListResponse>('/api/rangers/GetRangers' as string, { query: requestQuery.value }),
   { watch: [requestQuery] },
 )
 

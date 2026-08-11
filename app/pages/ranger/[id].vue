@@ -16,10 +16,12 @@ interface AbilityItem {
 const route = useRoute()
 const rangerId = computed(() => String(route.params.id ?? ''))
 const imageFailed = ref(false)
+// Preserve the current request's Cloudflare context while rendering on the server.
+const requestFetch = useRequestFetch()
 
 const { data: response, status, error } = await useAsyncData<RangerDetailResponse>(
   () => `ranger-${rangerId.value}`,
-  () => $fetch<RangerDetailResponse>(`/api/rangers/GetRanger/${encodeURIComponent(rangerId.value)}` as string),
+  () => requestFetch<RangerDetailResponse>(`/api/rangers/GetRanger/${encodeURIComponent(rangerId.value)}` as string),
   { watch: [rangerId] },
 )
 

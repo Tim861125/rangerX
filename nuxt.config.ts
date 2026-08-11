@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     componentDir: '@/components/ui',
   },
   nitro: {
-    preset: 'cloudflare-module',
+    preset: 'cloudflare-pages',
     typescript: {
       tsConfig: {
         compilerOptions: {

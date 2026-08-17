@@ -38,7 +38,7 @@ const querySchema = z.object({
     'cost-desc',
   ]).optional().default('newest'),
   page: z.coerce.number().int().min(1).max(500).optional().default(1),
-  pageSize: z.coerce.number().int().min(6).max(48).optional().default(18),
+  pageSize: z.coerce.number().int().min(6).max(60).optional().default(18),
 })
 
 const SORT_SQL: Record<RangerSort, string> = {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Cloud, Flame, Leaf, Moon, Sun } from '@lucide/vue'
 import type { RangerListItem } from '~~/shared/types/ranger'
 
 const props = defineProps<{ ranger: RangerListItem }>()
@@ -15,6 +16,17 @@ const attributeClass = computed(() => {
   }
   return classes[props.ranger.attribute] ?? classes.無
 })
+
+const attributeIcon = computed(() => {
+  const icons: Record<string, typeof Cloud> = {
+    水: Cloud,
+    火: Flame,
+    木: Leaf,
+    光: Sun,
+    暗: Moon,
+  }
+  return icons[props.ranger.attribute] ?? Cloud
+})
 </script>
 
 <template>
@@ -30,7 +42,9 @@ const attributeClass = computed(() => {
           @error="imageFailed = true"
         >
         <div class="absolute left-0.5 top-0.5 flex gap-0.5">
-          <Badge variant="outline" :class="attributeClass" class="text-[8px] px-1 py-0">{{ ranger.attribute }}</Badge>
+          <Badge variant="outline" :class="attributeClass" class="text-[8px] px-1 py-0">
+            <component :is="attributeIcon" class="size-3" />
+          </Badge>
           <Badge variant="secondary" class="bg-background/85 backdrop-blur text-[8px] px-1 py-0">{{ ranger.starRank }}</Badge>
         </div>
       </div>

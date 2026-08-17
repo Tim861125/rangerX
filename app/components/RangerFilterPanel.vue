@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RotateCcw } from '@lucide/vue'
+import { Cloud, Flame, Leaf, Moon, RotateCcw, Sun } from '@lucide/vue'
 
 defineProps<{
   stars: string[]
@@ -65,7 +65,28 @@ function reset(): void {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">全部屬性</SelectItem>
-          <SelectItem v-for="item in attributes" :key="item" :value="item">{{ item }}</SelectItem>
+          <div class="flex items-center gap-1.5">
+            <SelectItem value="水">
+              <Cloud class="size-3.5 text-sky-500" />
+              <span>水</span>
+            </SelectItem>
+            <SelectItem value="火">
+              <Flame class="size-3.5 text-rose-500" />
+              <span>火</span>
+            </SelectItem>
+            <SelectItem value="木">
+              <Leaf class="size-3.5 text-emerald-500" />
+              <span>木</span>
+            </SelectItem>
+            <SelectItem value="光">
+              <Sun class="size-3.5 text-amber-500" />
+              <span>光</span>
+            </SelectItem>
+            <SelectItem value="暗">
+              <Moon class="size-3.5 text-violet-500" />
+              <span>暗</span>
+            </SelectItem>
+          </div>
         </SelectContent>
       </Select>
     </div>

@@ -226,7 +226,7 @@ function pageNumbers(): number[] {
             </CardContent>
           </Card>
 
-          <div v-else-if="rangers.length" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div v-else-if="rangers.length" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <RangerCard v-for="ranger in rangers" :key="ranger.rangerId" :ranger="ranger" />
           </div>
 

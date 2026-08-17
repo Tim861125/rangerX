@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Cloud, Flame, Leaf, Moon, Sun } from '@lucide/vue'
+import { Droplet, Flame, Leaf, Moon, Sun } from '@lucide/vue'
 import type { RangerListItem } from '~~/shared/types/ranger'
 
 const props = defineProps<{ ranger: RangerListItem }>()
@@ -7,25 +7,25 @@ const imageFailed = ref(false)
 
 const attributeClass = computed(() => {
   const classes: Record<string, string> = {
-    火: 'border-rose-200 bg-rose-50 text-rose-700',
-    水: 'border-sky-200 bg-sky-50 text-sky-700',
-    木: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    光: 'border-amber-200 bg-amber-50 text-amber-700',
-    暗: 'border-violet-200 bg-violet-50 text-violet-700',
-    無: 'border-stone-200 bg-stone-50 text-stone-600',
+    火: 'bg-red-500 border-white',
+    水: 'bg-blue-500 border-white',
+    木: 'bg-green-500 border-white',
+    光: 'bg-yellow-400 border-white',
+    暗: 'bg-indigo-900 border-white',
+    無: 'bg-stone-500 border-white',
   }
   return classes[props.ranger.attribute] ?? classes.無
 })
 
 const attributeIcon = computed(() => {
-  const icons: Record<string, typeof Cloud> = {
-    水: Cloud,
+  const icons: Record<string, typeof Droplet> = {
+    水: Droplet,
     火: Flame,
     木: Leaf,
     光: Sun,
     暗: Moon,
   }
-  return icons[props.ranger.attribute] ?? Cloud
+  return icons[props.ranger.attribute] ?? Droplet
 })
 </script>
 
@@ -42,7 +42,7 @@ const attributeIcon = computed(() => {
           @error="imageFailed = true"
         >
         <div class="absolute left-0.5 top-0.5 flex gap-0.5">
-          <Badge variant="outline" :class="attributeClass" class="text-[8px] px-1 py-0">
+          <Badge variant="default" :class="attributeClass" class="text-[8px] px-1 py-0 !text-white">
             <component :is="attributeIcon" class="size-3" />
           </Badge>
           <Badge variant="secondary" class="bg-background/85 backdrop-blur text-[8px] px-1 py-0">{{ ranger.starRank }}</Badge>

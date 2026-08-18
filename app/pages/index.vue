@@ -27,7 +27,7 @@ const requestQuery = computed(() => ({
   attribute: attribute.value === 'all' ? undefined : attribute.value,
   sort: sort.value,
   page: page.value,
-  pageSize: 60,
+  pageSize: 160,
 }))
 
 const {
@@ -44,7 +44,7 @@ const filters = computed(() => filterResponse.value?.data ?? { stars: [], types:
 const rangers = computed(() => rangerResponse.value?.data ?? [])
 const pagination = computed(() => rangerResponse.value?.pagination ?? {
   page: 1,
-  pageSize: 60,
+  pageSize: 160,
   total: 0,
   totalPages: 0,
 })
@@ -188,10 +188,8 @@ function pageNumbers(): number[] {
         </div>
       </div>
 
-      <div v-if="status === 'pending'" class="grid grid-cols-15 gap-3">
-        <Card v-for="index in 30" :key="index" class="gap-0 overflow-hidden py-0">
-          <Skeleton class="h-20 rounded-none sm:h-32" />
-        </Card>
+      <div v-if="status === 'pending'" class="grid grid-cols-16 gap-1 sm:gap-1.5">
+        <div v-for="index in 160" :key="index" class="aspect-square w-full animate-pulse rounded-lg sm:rounded-xl border border-border/30 bg-muted/40" />
       </div>
 
       <Card v-else-if="error" class="border-destructive/30 py-10 text-center">
@@ -201,7 +199,7 @@ function pageNumbers(): number[] {
         </CardContent>
       </Card>
 
-      <div v-else-if="rangers.length" class="grid grid-cols-15 gap-3">
+      <div v-else-if="rangers.length" class="grid grid-cols-16 gap-1 sm:gap-1.5">
         <RangerCard v-for="ranger in rangers" :key="ranger.rangerId" :ranger="ranger" />
       </div>
 

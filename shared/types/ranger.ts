@@ -12,12 +12,112 @@ export interface RangerSourceRecord extends Record<string, unknown> {
   Ranger名稱: string
 }
 
+/**
+ * 進化型態代碼：
+ * - 1: 終極進化 (Ultimate)
+ * - 0: 超進化 (Hyper)
+ * - null: 一般 (Normal)
+ */
+export type EvolutionType = 1 | 0 | null
+
+export interface FormattedSkillEffect {
+  effect: string
+  factor: string
+  duration: string
+  range: string
+  isEventStage: boolean
+  isGuardian: boolean
+}
+
+export interface FormattedSkill {
+  name: string
+  description: string
+  chance: string
+  trigger: string
+  cooldown: string
+  icon: string
+  effects: FormattedSkillEffect[]
+}
+
+export interface FormattedAbility {
+  name: string
+  code: string
+  icon?: string
+  type: 'ability1' | 'ability2' | 'awakened'
+  isAwakened: boolean
+}
+
+export interface FormattedTalentEffect {
+  chance: string
+  effect: string
+  category?: string
+}
+
+export interface FormattedTalent {
+  description: string
+  triggerChance: string
+  condition: string
+  conditionCategory?: string
+  effects: FormattedTalentEffect[]
+  enhancements: string[]
+}
+
+export interface FormattedStatItem {
+  key: string
+  label: string
+  value: string
+  raw: number
+}
+
+export interface FormattedRateStatItem {
+  key: string
+  label: string
+  value: string
+}
+
+export interface FormattedGrowthStatItem {
+  key: string
+  label: string
+  value: string
+  raw: number
+}
+
+export interface FormattedRangerData {
+  rangerId: string
+  name: string
+  description: string
+  releasedAt: string
+  starCount: number
+  evolutionType: EvolutionType
+  isUltimate: boolean
+  isHyper: boolean
+  rangerType: string
+  attribute: string
+  respawnTime: string
+  mineralCost: number
+  attackRange: number
+  splashRange: number
+  isNft: boolean
+  isAdvent: boolean
+  imageUrl: string
+  attackSpeed: string
+  moveSpeed: string
+  primaryStats: FormattedStatItem[]
+  rateStats: FormattedRateStatItem[]
+  growthStats: FormattedGrowthStatItem[]
+  skill1: FormattedSkill | null
+  skill2: FormattedSkill | null
+  abilities: FormattedAbility[]
+  talent: FormattedTalent | null
+}
+
 export interface RangerListItem {
   rangerId: string
   name: string
   description: string
   releasedAt: string
-  starRank: string
+  starCount: number
+  evolutionType: EvolutionType
   rangerType: string
   attribute: string
   respawnTime: string
@@ -44,8 +144,7 @@ export interface RangerListResponse {
 }
 
 export interface RangerDetailResponse {
-  data: RangerSourceRecord & {
-    imageUrl: string
+  data: FormattedRangerData & {
     databaseUpdatedAt: string
   }
 }

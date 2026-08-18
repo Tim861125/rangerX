@@ -24,11 +24,16 @@ const displayCount = computed(() => {
   return Math.max(1, props.starCount)
 })
 
-// 顏色判斷：1 (終極進化)=藍色, 0 (超進化)=紫色, null (一般)=黃色
+// 顏色判斷：
+// 1 (終極進化) = 淺亮天藍/冰晶水藍
+// 0 (超進化) = 亮紫/幻紫光暈
+// 9星 (一般) = 尊爵璀璨金黃
+// 1~8星 (一般) = 清新明亮淺黃
 const fillColor = computed(() => {
-  if (props.evolutionType === 1) return '#38bdf8' // 終極進化 (天藍/亮藍)
-  if (props.evolutionType === 0) return '#c084fc' // 超進化 (亮紫)
-  return '#facc15'                                // 一般 (金黃)
+  if (props.evolutionType === 1) return '#38e1ff' // 終極進化 (淺天藍/冰晶水藍)
+  if (props.evolutionType === 0) return '#c084fc' // 超進化 (亮紫/幻紫)
+  if (props.starCount === 9) return '#f59e0b'    // 9星 (璀璨金黃/琥珀金)
+  return '#fde047'                               // 1~8星 (一般淺黃/明亮柔黃)
 })
 
 // 尺寸微調：16欄位比例

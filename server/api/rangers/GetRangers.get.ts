@@ -29,6 +29,7 @@ const querySchema = z.object({
   star: z.string().trim().max(30).optional().default(''),
   type: z.string().trim().max(30).optional().default(''),
   attribute: z.string().trim().max(30).optional().default(''),
+  status: z.enum(['all', '0', '1', '2', 'obtained']).optional().default('all'),
   sort: z.enum([
     'newest',
     'oldest',
@@ -43,13 +44,13 @@ const querySchema = z.object({
 })
 
 const SORT_SQL: Record<RangerSort, string> = {
-  newest: 'released_at DESC, ranger_id DESC',
-  oldest: 'released_at ASC, ranger_id ASC',
-  'health-desc': 'health DESC, ranger_id ASC',
-  'physical-desc': 'physical_attack DESC, ranger_id ASC',
-  'magic-desc': 'magic_attack DESC, ranger_id ASC',
-  'cost-asc': 'mineral_cost ASC, ranger_id ASC',
-  'cost-desc': 'mineral_cost DESC, ranger_id ASC',
+  newest: 'rf.released_at DESC, rf.ranger_id DESC',
+  oldest: 'rf.released_at ASC, rf.ranger_id ASC',
+  'health-desc': 'rf.health DESC, rf.ranger_id ASC',
+  'physical-desc': 'rf.physical_attack DESC, rf.ranger_id ASC',
+  'magic-desc': 'rf.magic_attack DESC, rf.ranger_id ASC',
+  'cost-asc': 'rf.mineral_cost ASC, rf.ranger_id ASC',
+  'cost-desc': 'rf.mineral_cost DESC, rf.ranger_id ASC',
 }
 
 function escapeLike(value: string): string {
@@ -96,49 +97,69 @@ export default defineEventHandler(async (event): Promise<RangerListResponse> => 
       throw createError({ statusCode: 400, message: '搜尋文字過長，請縮短關鍵字。' })
     }
     conditions.push(`(
-      name LIKE ? ESCAPE '!'
-      OR ranger_id LIKE ? ESCAPE '!'
-      OR description LIKE ? ESCAPE '!'
+      rf.name LIKE ? ESCAPE '!'
+      OR rf.ranger_id LIKE ? ESCAPE '!'
+      OR rf.description LIKE ? ESCAPE '!'
     )`)
     bindings.push(pattern, pattern, pattern)
   }
   if (query.star) {
     if (query.star === '終極進化' || query.star === '1') {
-      conditions.push('evolution_type = 1')
+      conditions.push('rf.evolution_type = 1')
     }
     else if (query.star === '超進化' || query.star === '0') {
-      conditions.push('evolution_type = 0')
+      conditions.push('rf.evolution_type = 0')
     }
     else {
       const match = query.star.match(/\d+/)
       if (match) {
-        conditions.push('star_count = ?')
+        conditions.push('rf.star_count = ?')
         bindings.push(Number.parseInt(match[0], 10))
       }
     }
   }
   if (query.type) {
-    conditions.push('ranger_type = ?')
+    conditions.push('rf.ranger_type = ?')
     bindings.push(query.type)
   }
   if (query.attribute) {
-    conditions.push('attribute = ?')
+    conditions.push('rf.attribute = ?')
     bindings.push(query.attribute)
+  }
+  if (query.status && query.status !== 'all') {
+    if (query.status === '0') {
+      conditions.push('(c.status IS NULL OR c.status = 0)')
+    }
+    else if (query.status === '1') {
+      conditions.push('c.status = 1')
+    }
+    else if (query.status === '2') {
+      conditions.push('c.status = 2')
+    }
+    else if (query.status === 'obtained') {
+      conditions.push('c.status IN (1, 2)')
+    }
   }
 
   const whereSql = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
   const offset = (query.page - 1) * query.pageSize
   const database = getDatabase(event)
   const countStatement = database
-    .prepare(`SELECT COUNT(*) AS total FROM rangers_formatted ${whereSql}`)
+    .prepare(`
+      SELECT COUNT(*) AS total
+      FROM rangers_formatted rf
+      LEFT JOIN ranger_collection c ON rf.ranger_id = c.ranger_id
+      ${whereSql}
+    `)
     .bind(...bindings)
   const listStatement = database.prepare(`
     SELECT
-      ranger_id, name, description, released_at, star_count, evolution_type,
-      ranger_type, attribute, respawn_time, mineral_cost, attack_range,
-      physical_attack, magic_attack, physical_defense, magic_defense,
-      health, is_nft, is_advent
-    FROM rangers_formatted
+      rf.ranger_id, rf.name, rf.description, rf.released_at, rf.star_count, rf.evolution_type,
+      rf.ranger_type, rf.attribute, rf.respawn_time, rf.mineral_cost, rf.attack_range,
+      rf.physical_attack, rf.magic_attack, rf.physical_defense, rf.magic_defense,
+      rf.health, rf.is_nft, rf.is_advent
+    FROM rangers_formatted rf
+    LEFT JOIN ranger_collection c ON rf.ranger_id = c.ranger_id
     ${whereSql}
     ORDER BY ${SORT_SQL[query.sort]}
     LIMIT ? OFFSET ?

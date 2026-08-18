@@ -57,7 +57,7 @@ useSeoMeta({
       </CardContent>
     </Card>
 
-    <div v-else class="space-y-6 sm:space-y-8">
+    <div v-else-if="ranger" class="space-y-6 sm:space-y-8">
       <section class="relative overflow-hidden rounded-3xl border bg-card shadow-sm">
         <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-teal-400 to-amber-300" />
         <div class="grid gap-0 md:grid-cols-[300px_1fr]">
@@ -83,8 +83,8 @@ useSeoMeta({
           <div class="flex flex-col justify-center p-5 sm:p-8 lg:p-10">
             <div class="flex flex-wrap items-center gap-2">
               <Badge variant="outline" :class="attributeClass">{{ ranger.attribute }}屬性</Badge>
-              <Badge v-if="ranger.evolutionType === 1" class="bg-blue-600 hover:bg-blue-700">終極進化</Badge>
-              <Badge v-if="ranger.evolutionType === 0" class="bg-purple-600 hover:bg-purple-700">超進化</Badge>
+              <Badge v-if="ranger.evolutionType === 1" class="bg-sky-500 hover:bg-sky-600 text-white font-medium">終極進化</Badge>
+              <Badge v-if="ranger.evolutionType === 0" class="bg-purple-600 hover:bg-purple-700 text-white font-medium">超進化</Badge>
               <Badge variant="outline">{{ ranger.rangerType }}</Badge>
               <Badge v-if="ranger.isNft" class="bg-violet-600">NFT</Badge>
               <Badge v-if="ranger.isAdvent" class="bg-amber-600">降臨關卡</Badge>
@@ -107,7 +107,7 @@ useSeoMeta({
           <h2 class="text-xl font-bold tracking-tight">戰鬥數值</h2>
         </div>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-          <Card v-for="item in ranger.primaryStats" :key="item.key" class="gap-2 px-4 py-4">
+          <Card v-for="item in ranger?.primaryStats" :key="item.key" class="gap-2 px-4 py-4">
             <p class="text-[11px] text-muted-foreground">{{ item.label }}</p>
             <p class="truncate text-base font-bold tabular-nums" :title="item.value">{{ item.value }}</p>
           </Card>
@@ -121,17 +121,17 @@ useSeoMeta({
           </CardHeader>
           <CardContent>
             <div class="grid grid-cols-2 gap-x-5 gap-y-4 text-sm">
-              <div v-for="item in ranger.rateStats" :key="item.key" class="border-b pb-3 last:border-0">
+              <div v-for="item in ranger?.rateStats" :key="item.key" class="border-b pb-3 last:border-0">
                 <p class="text-xs text-muted-foreground">{{ item.label }}</p>
                 <p class="mt-1 font-semibold tabular-nums">{{ item.value }}</p>
               </div>
               <div class="border-b pb-3">
                 <p class="text-xs text-muted-foreground">攻擊速度</p>
-                <p class="mt-1 font-semibold">{{ ranger.attackSpeed }}</p>
+                <p class="mt-1 font-semibold">{{ ranger?.attackSpeed }}</p>
               </div>
               <div class="border-b pb-3">
                 <p class="text-xs text-muted-foreground">移動速度</p>
-                <p class="mt-1 font-semibold">{{ ranger.moveSpeed }}</p>
+                <p class="mt-1 font-semibold">{{ ranger?.moveSpeed }}</p>
               </div>
             </div>
           </CardContent>
@@ -144,7 +144,7 @@ useSeoMeta({
           </CardHeader>
           <CardContent>
             <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              <div v-for="item in ranger.growthStats" :key="item.key" class="rounded-xl bg-muted/45 p-3">
+              <div v-for="item in ranger?.growthStats" :key="item.key" class="rounded-xl bg-muted/45 p-3">
                 <p class="text-[11px] leading-4 text-muted-foreground">{{ item.label }}</p>
                 <p class="mt-1 text-sm font-bold tabular-nums">{{ item.value }}</p>
               </div>
@@ -159,8 +159,8 @@ useSeoMeta({
           <h2 class="text-xl font-bold tracking-tight">技能</h2>
         </div>
         <div class="grid gap-4 lg:grid-cols-2">
-          <RangerSkillPanel title="技能 1" :skill="ranger.skill1" />
-          <RangerSkillPanel title="技能 2" :skill="ranger.skill2" />
+          <RangerSkillPanel title="技能 1" :skill="ranger?.skill1 ?? null" />
+          <RangerSkillPanel title="技能 2" :skill="ranger?.skill2 ?? null" />
         </div>
       </section>
 
@@ -175,7 +175,7 @@ useSeoMeta({
             <CardDescription>一般能力與可選覺醒能力。</CardDescription>
           </CardHeader>
           <CardContent>
-            <div v-if="ranger.abilities.length" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-if="ranger?.abilities?.length" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div v-for="ability in ranger.abilities" :key="`${ability.name}-${ability.code}`" class="rounded-xl border p-4">
                 <div class="flex items-center gap-2">
                   <Badge v-if="ability.isAwakened" variant="secondary">覺醒</Badge>
@@ -187,7 +187,7 @@ useSeoMeta({
             <p v-else class="text-sm text-muted-foreground">此 Ranger 尚無能力資料。</p>
           </CardContent>
         </Card>
-        <RangerTalentPanel :talent="ranger.talent" />
+        <RangerTalentPanel :talent="ranger?.talent ?? null" />
       </section>
     </div>
   </div>

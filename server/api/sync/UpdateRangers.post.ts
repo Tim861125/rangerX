@@ -14,6 +14,10 @@ function timingSafeEqual(left: string, right: string): boolean {
   return mismatch === 0
 }
 
+interface UpdateRangersPayload {
+  force?: boolean
+}
+
 export default defineEventHandler(async (event): Promise<SyncResultResponse> => {
   const configuredToken = useRuntimeConfig(event).syncToken.trim()
 
@@ -28,5 +32,8 @@ export default defineEventHandler(async (event): Promise<SyncResultResponse> => 
     }
   }
 
-  return { data: await syncRangers(event) }
+  const body = await readBody<UpdateRangersPayload>(event).catch(() => null)
+  const force = Boolean(body?.force)
+
+  return { data: await syncRangers(event, { force }) }
 })

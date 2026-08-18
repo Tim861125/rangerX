@@ -187,3 +187,34 @@ export interface SyncResult {
 export interface SyncResultResponse {
   data: SyncResult
 }
+
+export type CollectionStatus = 0 | 1 | 2
+
+export interface CollectionStats {
+  total: number
+  obtained: number
+  checked: number
+  unobtained: number
+  obtainedPercentage: number
+  checkedPercentage: number
+}
+
+export interface CollectionDataResponse {
+  data: {
+    statuses: Record<string, number>
+    stats: CollectionStats
+  }
+}
+
+export interface UpdateCollectionPayload {
+  rangerId: string
+  status: number
+}
+
+export interface UpdateCollectionResponse {
+  data: {
+    rangerId: string
+    status: number
+    stats: CollectionStats
+  }
+}

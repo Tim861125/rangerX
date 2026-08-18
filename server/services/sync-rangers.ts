@@ -26,27 +26,42 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message.slice(0, 500) : '未知的同步錯誤'
 }
 
-export async function syncRangers(event: H3Event): Promise<SyncResult> {
+export interface SyncOptions {
+  force?: boolean
+}
+
+export async function syncRangers(event: H3Event, options: SyncOptions = {}): Promise<SyncResult> {
   const database = getDatabase(event)
   const sourceUrl = getSourceUrl(event)
   let lockAcquired = false
 
   try {
-    const lock = await database.prepare(`
-      UPDATE sync_status
-      SET status = 'running',
-          source_url = ?,
-          started_at = datetime('now'),
-          error_message = NULL
-      WHERE id = 1
-        AND (status != 'running' OR started_at < datetime('now', '-10 minutes'))
-        AND (completed_at IS NULL OR datetime(completed_at) < datetime('now', '-15 seconds'))
-    `).bind(sourceUrl).run()
+    const lockSql = options.force
+      ? `
+        UPDATE sync_status
+        SET status = 'running',
+            source_url = ?,
+            started_at = datetime('now'),
+            error_message = NULL
+        WHERE id = 1
+      `
+      : `
+        UPDATE sync_status
+        SET status = 'running',
+            source_url = ?,
+            started_at = datetime('now'),
+            error_message = NULL
+        WHERE id = 1
+          AND (status != 'running' OR started_at < datetime('now', '-2 minutes'))
+          AND (completed_at IS NULL OR datetime(completed_at) < datetime('now', '-10 seconds'))
+      `
+
+    const lock = await database.prepare(lockSql).bind(sourceUrl).run()
 
     if (lock.meta.changes !== 1) {
       throw createError({
         statusCode: 409,
-        message: '資料正在更新，或剛完成更新，請稍後再試。',
+        message: '資料正在更新，或剛完成更新，請稍後再試。若確認已中斷可選擇「強制同步」。',
       })
     }
     lockAcquired = true

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ArrowLeft, CalendarDays, Coins, Gauge, HeartPulse, Shield, Sparkles, Swords, WandSparkles } from '@lucide/vue'
 import type { RangerDetailResponse } from '~~/shared/types/ranger'
+import { DEFAULT_RANGER_IMAGE_ORIGIN, getRangerImageUrl } from '~~/shared/utils/ranger'
 
 const route = useRoute()
 const rangerId = computed(() => String(route.params.id ?? ''))
 const imageFailed = ref(false)
+const currentImageSrc = ref('')
 // Preserve the current request's Cloudflare context while rendering on the server.
 const requestFetch = useRequestFetch()
 
@@ -15,6 +17,27 @@ const { data: response, status, error } = await useAsyncData<RangerDetailRespons
 )
 
 const ranger = computed(() => response.value?.data)
+
+watch(ranger, (newRanger) => {
+  if (newRanger?.imageUrl) {
+    currentImageSrc.value = newRanger.imageUrl
+    imageFailed.value = false
+  }
+}, { immediate: true })
+
+function handleImageError() {
+  if (!ranger.value) {
+    imageFailed.value = true
+    return
+  }
+  const fallbackUrl = getRangerImageUrl(ranger.value.rangerId, DEFAULT_RANGER_IMAGE_ORIGIN)
+  if (currentImageSrc.value !== fallbackUrl) {
+    currentImageSrc.value = fallbackUrl
+  }
+  else {
+    imageFailed.value = true
+  }
+}
 
 const attributeClass = computed(() => {
   const classes: Record<string, string> = {
@@ -68,12 +91,12 @@ useSeoMeta({
               </div>
               <img
                 v-if="!imageFailed"
-                :src="ranger.imageUrl"
+                :src="currentImageSrc"
                 :alt="ranger.name"
                 width="320"
                 height="320"
                 class="size-full object-contain pt-5 drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)] transition-transform duration-300 hover:scale-105"
-                @error="imageFailed = true"
+                @error="handleImageError"
               >
               <div v-else class="grid size-full place-items-center text-xl font-bold text-muted-foreground">
                 {{ ranger.name }}

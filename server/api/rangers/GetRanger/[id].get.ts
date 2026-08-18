@@ -94,7 +94,7 @@ export default defineEventHandler(async (event): Promise<RangerDetailResponse> =
     splashRange: row.splash_range,
     isNft: row.is_nft === 1,
     isAdvent: row.is_advent === 1,
-    imageUrl: getRangerImageUrl(row.ranger_id),
+    imageUrl: getRangerImageUrl(row.ranger_id, useRuntimeConfig(event).public?.imageOrigin as string | undefined),
     attackSpeed: row.attack_speed,
     moveSpeed: row.move_speed,
     primaryStats: safeParse<FormattedStatItem[]>(row.primary_stats_json, []),

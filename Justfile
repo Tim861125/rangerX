@@ -32,6 +32,10 @@ typecheck:
 test:
     bun run test
 
+# 批次同步角色圖片至 Cloudflare R2（或本地目錄）
+sync-images *args="":
+    bun run scripts/sync-images.ts {{args}}
+
 # 建置 Cloudflare Worker
 build:
     bun run build

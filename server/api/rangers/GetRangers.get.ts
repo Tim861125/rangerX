@@ -57,7 +57,7 @@ function escapeLike(value: string): string {
   return value.replaceAll('!', '!!').replaceAll('%', '!%').replaceAll('_', '!_')
 }
 
-function mapRanger(row: FormattedListRow): RangerListItem {
+function mapRanger(row: FormattedListRow, imageOrigin?: string): RangerListItem {
   return {
     rangerId: row.ranger_id,
     name: row.name,
@@ -77,7 +77,7 @@ function mapRanger(row: FormattedListRow): RangerListItem {
     health: row.health,
     nft: row.is_nft === 1,
     advent: row.is_advent === 1,
-    imageUrl: getRangerImageUrl(row.ranger_id),
+    imageUrl: getRangerImageUrl(row.ranger_id, imageOrigin),
   }
 }
 
@@ -171,8 +171,10 @@ export default defineEventHandler(async (event): Promise<RangerListResponse> => 
   ])
   const totalCount = total ?? 0
 
+  const imageOrigin = useRuntimeConfig(event).public?.imageOrigin as string | undefined
+
   return {
-    data: result.results.map(mapRanger),
+    data: result.results.map(row => mapRanger(row, imageOrigin)),
     pagination: {
       page: query.page,
       pageSize: query.pageSize,

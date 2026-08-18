@@ -157,7 +157,7 @@ export function formatAbilities(raw: Record<string, unknown>): FormattedAbility[
   return abilities
 }
 
-export function formatRangerRecord(raw: RangerSourceRecord): FormattedRangerData {
+export function formatRangerRecord(raw: RangerSourceRecord, imageOrigin?: string): FormattedRangerData {
   const rangerId = cleanStr(raw.ranger_id)
   const name = cleanStr(raw.Ranger名稱)
   const description = cleanMultiline(raw['角色敘述'])
@@ -177,7 +177,7 @@ export function formatRangerRecord(raw: RangerSourceRecord): FormattedRangerData
   const splashRange = parseNum(raw['濺射範圍'])
   const isNft = raw['nft角色'] === '是'
   const isAdvent = raw['降臨關卡角色'] === '是'
-  const imageUrl = getRangerImageUrl(rangerId)
+  const imageUrl = getRangerImageUrl(rangerId, imageOrigin)
 
   const physicalAttack = parseNum(raw['物理攻擊力'])
   const magicAttack = parseNum(raw['魔法攻擊力'])

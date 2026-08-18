@@ -2,6 +2,7 @@
 import { Check, Droplet, Flame, Leaf, Moon, Sun } from '@lucide/vue'
 import { NuxtLink } from '#components'
 import type { RangerListItem } from '~~/shared/types/ranger'
+import { DEFAULT_RANGER_IMAGE_ORIGIN, getRangerImageUrl } from '~~/shared/utils/ranger'
 
 const props = withDefaults(
   defineProps<{
@@ -20,6 +21,22 @@ defineEmits<{
 }>()
 
 const imageFailed = ref(false)
+const currentImageSrc = ref(props.ranger.imageUrl)
+
+watch(() => props.ranger.imageUrl, (newUrl) => {
+  currentImageSrc.value = newUrl
+  imageFailed.value = false
+})
+
+function handleImageError() {
+  const fallbackUrl = getRangerImageUrl(props.ranger.rangerId, DEFAULT_RANGER_IMAGE_ORIGIN)
+  if (currentImageSrc.value !== fallbackUrl) {
+    currentImageSrc.value = fallbackUrl
+  }
+  else {
+    imageFailed.value = true
+  }
+}
 
 const DEFAULT_ATTRIBUTE = { bg: 'bg-stone-500', icon: Droplet }
 const ATTRIBUTE_MAP: Record<string, { bg: string; icon: typeof Droplet }> = {
@@ -95,11 +112,11 @@ const statusTitle = computed(() => {
       <div class="absolute inset-0 flex items-center justify-center p-1.5 pt-3.5 sm:pt-4 pb-1">
         <img
           v-if="!imageFailed"
-          :src="ranger.imageUrl"
+          :src="currentImageSrc"
           :alt="ranger.name"
           loading="lazy"
           class="size-full object-contain drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.35)] transition-transform duration-200 group-hover:scale-110"
-          @error="imageFailed = true"
+          @error="handleImageError"
         >
         <div v-else class="text-[9px] font-bold text-white/60">
           {{ ranger.name.slice(0, 2) }}

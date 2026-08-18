@@ -29,6 +29,7 @@ just dev
 just                 # 列出所有指令
 just typecheck       # Nuxt / Vue 型別檢查
 just test            # Vitest
+just sync-images     # 批次同步角色圖片至 Cloudflare R2
 just check           # typecheck + test + build
 just deploy-dry      # Cloudflare dry-run
 ```
@@ -75,6 +76,25 @@ Cloudflare Dashboard 的 Git build 可使用：
 - Deploy command：`bun run db:migrate:remote && bunx wrangler pages deploy`
 
 `wrangler.jsonc` 是 Pages 的部署設定來源，並把遠端 D1 以 `DB` binding 綁定；請勿另外建立名稱為 `rangerx_db` 的重複 binding。
+
+## 圖片儲存與 Cloudflare R2
+
+為防止外部第三方圖源失效並兼顧 Cloudflare D1 的讀取效能（避免在 SQLite 儲存二進位 BLOB 導致資料庫膨脹與消耗額度），本專案採用 **Cloudflare R2（物件儲存）** 儲存角色圖片：
+
+- **圖片網址設定**：透過環境變數 `NUXT_PUBLIC_IMAGE_ORIGIN` 指定 R2 CDN 網址（例如 `https://img.rangerx.com` 或 `https://pub-xxx.r2.dev`）。若未設定，會自動回退至原外部圖源。
+- **前端 Fallback 機制**：若 R2 CDN 載入失敗，前端會自動嘗試回退至原圖源，兩者皆失敗時優雅顯示文字占位。
+- **批次圖片同步 CLI**：使用專用腳本進行高並發下載與 R2 S3 API 上傳：
+
+```bash
+# 測試下載（不寫入 R2）
+just sync-images --dry-run --limit 10
+
+# 下載至本機目錄
+just sync-images --local-dir ./dist-images
+
+# 正式上傳至 Cloudflare R2（需在 .env 設定 R2 憑證）
+just sync-images
+```
 
 ## 資料設計（三表架構）
 

@@ -21,6 +21,9 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     syncToken: '',
+    public: {
+      imageOrigin: '',
+    },
   },
   app: {
     head: {

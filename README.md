@@ -29,6 +29,7 @@ just dev
 just                 # 列出所有指令
 just typecheck       # Nuxt / Vue 型別檢查
 just test            # Vitest
+just sync-images     # 批次同步角色圖片至 Cloudflare R2
 just check           # typecheck + test + build
 just deploy-dry      # Cloudflare dry-run
 ```
@@ -76,8 +77,31 @@ Cloudflare Dashboard 的 Git build 可使用：
 
 `wrangler.jsonc` 是 Pages 的部署設定來源，並把遠端 D1 以 `DB` binding 綁定；請勿另外建立名稱為 `rangerx_db` 的重複 binding。
 
-## 資料設計
+## 圖片儲存與 Cloudflare R2
 
-D1 的 `rangers.data_json` 保留來源的完整 JSON，避免混合型態的技能／才能資料在匯入時遺失；常用篩選與排序欄位則用 SQLite generated columns 建立索引。同步時一次最多 50 筆 Ranger 共用一個 multi-row upsert，完整初次匯入仍可符合 D1 Free tier 每次 Worker invocation 的 50 queries 上限。
+為防止外部第三方圖源失效並兼顧 Cloudflare D1 的讀取效能（避免在 SQLite 儲存二進位 BLOB 導致資料庫膨脹與消耗額度），本專案採用 **Cloudflare R2（物件儲存）** 儲存角色圖片：
+
+- **圖片網址設定**：透過環境變數 `NUXT_PUBLIC_IMAGE_ORIGIN` 指定 R2 CDN 網址（例如 `https://img.rangerx.com` 或 `https://pub-xxx.r2.dev`）。若未設定，會自動回退至原外部圖源。
+- **前端 Fallback 機制**：若 R2 CDN 載入失敗，前端會自動嘗試回退至原圖源，兩者皆失敗時優雅顯示文字占位。
+- **批次圖片同步 CLI**：使用專用腳本進行高並發下載與 R2 S3 API 上傳：
+
+```bash
+# 測試下載（不寫入 R2）
+just sync-images --dry-run --limit 10
+
+# 下載至本機目錄
+just sync-images --local-dir ./dist-images
+
+# 正式上傳至 Cloudflare R2（需在 .env 設定 R2 憑證）
+just sync-images
+```
+
+## 資料設計（三表架構）
+
+D1 資料庫採用分層清晰的 **三表架構**：
+
+1. **`sync_status`（狀態控制表）**：負責紀錄資料同步的狀態鎖、歷程統計（抓取、新增、更新、刪除筆數）與錯誤訊息。
+2. **`rangers_raw`（原始資料表）**：完整拆解來源 JSON 的 45 個原生欄位，保留原始字串、單位、中文字與子物件，方便審計與重構。
+3. **`rangers_formatted`（格式化資料表）**：清洗單位（`14.0秒` -> `14.0`）、分離評級與數值、轉換二元布林（`1/0`）、過濾無用字串（`"無"` -> `NULL`）並建立專用索引（如星數、屬性、類型、推出時間等），提供 API 高速查詢。
 
 完整分析請見 [docs/data-analysis.md](docs/data-analysis.md)。

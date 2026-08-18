@@ -1,75 +1,163 @@
 <script setup lang="ts">
-import { ArrowUpRight, Coins, HeartPulse, Sparkles, Swords } from '@lucide/vue'
+import { Check, Droplet, Flame, Leaf, Moon, Sun } from '@lucide/vue'
+import { NuxtLink } from '#components'
 import type { RangerListItem } from '~~/shared/types/ranger'
+import { DEFAULT_RANGER_IMAGE_ORIGIN, getRangerImageUrl } from '~~/shared/utils/ranger'
 
-const props = defineProps<{ ranger: RangerListItem }>()
+const props = withDefaults(
+  defineProps<{
+    ranger: RangerListItem
+    mode?: 'link' | 'collection'
+    status?: number
+  }>(),
+  {
+    mode: 'link',
+    status: 0,
+  },
+)
+
+defineEmits<{
+  (e: 'toggle', rangerId: string): void
+}>()
+
 const imageFailed = ref(false)
+const currentImageSrc = ref(props.ranger.imageUrl)
 
-const attributeClass = computed(() => {
-  const classes: Record<string, string> = {
-    火: 'border-rose-200 bg-rose-50 text-rose-700',
-    水: 'border-sky-200 bg-sky-50 text-sky-700',
-    木: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    光: 'border-amber-200 bg-amber-50 text-amber-700',
-    暗: 'border-violet-200 bg-violet-50 text-violet-700',
-    無: 'border-stone-200 bg-stone-50 text-stone-600',
+watch(() => props.ranger.imageUrl, (newUrl) => {
+  currentImageSrc.value = newUrl
+  imageFailed.value = false
+})
+
+function handleImageError() {
+  const fallbackUrl = getRangerImageUrl(props.ranger.rangerId, DEFAULT_RANGER_IMAGE_ORIGIN)
+  if (currentImageSrc.value !== fallbackUrl) {
+    currentImageSrc.value = fallbackUrl
   }
-  return classes[props.ranger.attribute] ?? classes.無
+  else {
+    imageFailed.value = true
+  }
+}
+
+const DEFAULT_ATTRIBUTE = { bg: 'bg-stone-500', icon: Droplet }
+const ATTRIBUTE_MAP: Record<string, { bg: string; icon: typeof Droplet }> = {
+  水: { bg: 'bg-sky-500', icon: Droplet },
+  火: { bg: 'bg-rose-500', icon: Flame },
+  木: { bg: 'bg-emerald-500', icon: Leaf },
+  光: { bg: 'bg-amber-400 !text-stone-900', icon: Sun },
+  暗: { bg: 'bg-indigo-900', icon: Moon },
+  無: { bg: 'bg-stone-500', icon: Droplet },
+}
+
+// 屬性圖示與外觀樣式
+const attributeColor = computed<{ bg: string; icon: typeof Droplet }>(() => {
+  return ATTRIBUTE_MAP[props.ranger.attribute] ?? DEFAULT_ATTRIBUTE
+})
+
+// 參考遊戲內真實卡牌背景風格（終極進化=清亮藍晶、超進化=幻紫光暈、9星=尊爵金光、7-8星=琥珀金光、一般=大地木質色）
+const cardBackground = computed(() => {
+  if (props.ranger.evolutionType === 1) {
+    return 'bg-[radial-gradient(ellipse_at_50%_40%,#0284c7_0%,#0c4a6e_65%,#082f49_100%)] border-sky-300/60 shadow-sky-950/30'
+  }
+  if (props.ranger.evolutionType === 0) {
+    return 'bg-[radial-gradient(ellipse_at_50%_40%,#7e22ce_0%,#4c1d95_60%,#1e1b4b_100%)] border-purple-400/60 shadow-purple-950/30'
+  }
+  if (props.ranger.starCount === 9) {
+    return 'bg-[radial-gradient(ellipse_at_50%_40%,#d97706_0%,#78350f_60%,#351503_100%)] border-amber-300/80 shadow-amber-900/40'
+  }
+  if (props.ranger.starCount >= 7) {
+    return 'bg-[radial-gradient(ellipse_at_50%_40%,#92400e_0%,#451a03_100%)] border-amber-500/50 shadow-amber-950/20'
+  }
+  return 'bg-[radial-gradient(ellipse_at_50%_40%,#5c4028_0%,#2d1b0e_100%)] border-[#8c6747]/60 shadow-stone-950/20'
+})
+
+const statusTitle = computed(() => {
+  if (props.mode !== 'collection') {
+    return `${props.ranger.name} (${props.ranger.starCount}星 · ${props.ranger.attribute}屬性 · ${props.ranger.rangerType})`
+  }
+  const stateName = props.status === 2 ? '【已打勾】' : props.status === 1 ? '【已擁有】' : '【未擁有】'
+  return `${stateName} ${props.ranger.name}（點擊切換狀態）`
 })
 </script>
 
 <template>
-  <NuxtLink :to="`/ranger/${ranger.rangerId}`" class="group block h-full focus-visible:outline-none">
-    <Card class="h-full gap-0 overflow-hidden border-border/75 py-0 transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-primary/30 group-hover:shadow-lg group-hover:shadow-primary/5 group-focus-visible:ring-2 group-focus-visible:ring-ring">
-      <div class="flex min-h-36 sm:block">
-        <div class="relative grid w-32 shrink-0 place-items-center overflow-hidden bg-[radial-gradient(circle_at_50%_38%,color-mix(in_oklab,var(--primary)_12%,white),var(--muted))] sm:h-48 sm:w-full">
-          <span class="text-4xl font-black text-primary/15">{{ ranger.name.slice(0, 1) }}</span>
-          <img
-            v-if="!imageFailed"
-            :src="ranger.imageUrl"
-            :alt="ranger.name"
-            loading="lazy"
-            width="240"
-            height="240"
-            class="absolute inset-0 size-full object-contain p-2 transition-transform duration-300 group-hover:scale-105 sm:p-4"
-            @error="imageFailed = true"
-          >
-          <div class="absolute left-2 top-2 flex flex-wrap gap-1.5 sm:left-3 sm:top-3">
-            <Badge variant="outline" :class="attributeClass">{{ ranger.attribute }}</Badge>
-            <Badge variant="secondary" class="bg-background/85 backdrop-blur">{{ ranger.starRank }}</Badge>
-          </div>
-        </div>
+  <component
+    :is="mode === 'collection' ? 'button' : NuxtLink"
+    :to="mode === 'collection' ? undefined : `/ranger/${ranger.rangerId}`"
+    :type="mode === 'collection' ? 'button' : undefined"
+    :title="statusTitle"
+    class="group relative block aspect-square w-full select-none text-left focus-visible:outline-none"
+    :class="[
+      mode === 'collection' && 'cursor-pointer',
+      mode === 'collection' && status === 0 && 'opacity-40 grayscale hover:opacity-80 hover:grayscale-0 transition-all duration-200',
+      mode === 'collection' && status === 1 && 'opacity-100 transition-all duration-200 ring-1 ring-primary/40',
+      mode === 'collection' && status === 2 && 'opacity-100 transition-all duration-200 ring-2 ring-emerald-500/80',
+    ]"
+    @click="mode === 'collection' ? $emit('toggle', ranger.rangerId) : undefined"
+  >
+    <!-- 卡牌主體邊框與漸層背景 -->
+    <div
+      class="relative size-full overflow-hidden rounded-lg sm:rounded-xl border-[1.5px] shadow-sm transition-all duration-150 group-hover:-translate-y-0.5 group-hover:scale-[1.06] group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-primary"
+      :class="cardBackground"
+    >
+      <!-- 頂部中央水平星星排列 (如同遊戲卡牌) -->
+      <div class="pointer-events-none absolute inset-x-0 top-1 sm:top-1.5 z-20 flex items-center justify-center">
+        <StarDisplay
+          :star-count="ranger.starCount"
+          :evolution-type="ranger.evolutionType"
+          mode="card"
+        />
+      </div>
 
-        <div class="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
-          <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0">
-              <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ ranger.rangerId }}</p>
-              <h3 class="mt-1 line-clamp-2 text-base font-bold tracking-tight sm:text-lg">{{ ranger.name }}</h3>
-            </div>
-            <ArrowUpRight class="mt-1 hidden size-4 shrink-0 text-muted-foreground transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary sm:block" />
-          </div>
-          <p class="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground sm:min-h-10">{{ ranger.description }}</p>
-
-          <div class="mt-auto grid grid-cols-2 gap-x-3 gap-y-2 pt-4 text-xs">
-            <div class="flex items-center gap-1.5 text-muted-foreground" title="體力">
-              <HeartPulse class="size-3.5 text-rose-500" />
-              <span class="font-medium text-foreground">{{ ranger.health.toLocaleString() }}</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-muted-foreground" title="物理攻擊力">
-              <Swords class="size-3.5 text-orange-500" />
-              <span class="font-medium text-foreground">{{ ranger.physicalAttack.toLocaleString() }}</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-muted-foreground" title="魔法攻擊力">
-              <Sparkles class="size-3.5 text-violet-500" />
-              <span class="font-medium text-foreground">{{ ranger.magicAttack.toLocaleString() }}</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-muted-foreground" title="生產礦物費用">
-              <Coins class="size-3.5 text-amber-500" />
-              <span class="font-medium text-foreground">{{ ranger.mineralCost.toLocaleString() }}</span>
-            </div>
-          </div>
+      <!-- 角色立繪置中填滿 -->
+      <div class="absolute inset-0 flex items-center justify-center p-1.5 pt-3.5 sm:pt-4 pb-1">
+        <img
+          v-if="!imageFailed"
+          :src="currentImageSrc"
+          :alt="ranger.name"
+          loading="lazy"
+          class="size-full object-contain drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.35)] transition-transform duration-200 group-hover:scale-110"
+          @error="handleImageError"
+        >
+        <div v-else class="text-[9px] font-bold text-white/60">
+          {{ ranger.name.slice(0, 2) }}
         </div>
       </div>
-    </Card>
-  </NuxtLink>
+
+      <!-- 左下角屬性小圓章徽 -->
+      <div
+        class="absolute bottom-1 left-1 z-20 flex size-4 sm:size-4.5 items-center justify-center rounded-full border border-white/90 text-white shadow-xs"
+        :class="attributeColor.bg"
+        :title="`${ranger.attribute}屬性`"
+      >
+        <component :is="attributeColor.icon" class="size-2.5 sm:size-3" />
+      </div>
+
+      <!-- 右上角 NFT / 降臨角標籤 (若有且未打勾覆蓋) -->
+      <div
+        v-if="(ranger.nft || ranger.advent) && !(mode === 'collection' && status === 2)"
+        class="absolute top-1 right-1 z-20 rounded px-1 py-0.5 text-[7px] sm:text-[8px] font-black uppercase tracking-wider text-white shadow"
+        :class="ranger.nft ? 'bg-violet-600' : 'bg-amber-600'"
+      >
+        {{ ranger.nft ? 'NFT' : '降臨' }}
+      </div>
+
+      <!-- 收集簿狀態標記 (打勾標記) -->
+      <div
+        v-if="mode === 'collection' && status === 2"
+        class="absolute top-1 right-1 z-30 flex size-4.5 sm:size-5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-1 ring-white"
+      >
+        <Check class="size-3 sm:size-3.5 stroke-[3]" />
+      </div>
+
+      <!-- 收集簿狀態標記 (已擁有微光圓點標記) -->
+      <div
+        v-else-if="mode === 'collection' && status === 1"
+        class="absolute top-1 right-1 z-30 size-2.5 sm:size-3 rounded-full bg-amber-400 shadow-sm ring-1 ring-white/90"
+        title="已擁有"
+      />
+
+      <!-- 卡牌微光立體漸層覆蓋 -->
+      <div class="pointer-events-none absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-b from-white/10 via-transparent to-black/20" />
+    </div>
+  </component>
 </template>

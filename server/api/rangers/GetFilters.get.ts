@@ -5,26 +5,27 @@ interface FilterRow {
   value: string
 }
 
-function sortStars(stars: string[]): string[] {
-  return stars.sort((left, right) => {
-    const leftNumber = Number(left.match(/\d+/)?.[0] ?? 0)
-    const rightNumber = Number(right.match(/\d+/)?.[0] ?? 0)
-    if (leftNumber !== rightNumber) return rightNumber - leftNumber
-    return left.localeCompare(right, 'zh-Hant')
-  })
+interface StarCountRow {
+  star_count: number
 }
 
 export default defineEventHandler(async (event): Promise<RangerFiltersResponse> => {
   const database = getDatabase(event)
-  const [stars, types, attributes] = await Promise.all([
-    database.prepare('SELECT DISTINCT star_rank AS value FROM rangers ORDER BY value').all<FilterRow>(),
-    database.prepare('SELECT DISTINCT ranger_type AS value FROM rangers ORDER BY value').all<FilterRow>(),
-    database.prepare('SELECT DISTINCT attribute AS value FROM rangers ORDER BY value').all<FilterRow>(),
+  const [starCounts, types, attributes] = await Promise.all([
+    database.prepare('SELECT DISTINCT star_count FROM rangers_formatted ORDER BY star_count DESC').all<StarCountRow>(),
+    database.prepare('SELECT DISTINCT ranger_type AS value FROM rangers_formatted ORDER BY value').all<FilterRow>(),
+    database.prepare('SELECT DISTINCT attribute AS value FROM rangers_formatted ORDER BY value').all<FilterRow>(),
   ])
+
+  const starOptions = [
+    '終極進化',
+    '超進化',
+    ...starCounts.results.map(row => `${row.star_count}星`),
+  ]
 
   return {
     data: {
-      stars: sortStars(stars.results.map(row => row.value)),
+      stars: starOptions,
       types: types.results.map(row => row.value),
       attributes: attributes.results.map(row => row.value),
     },

@@ -1,53 +1,9 @@
 <script setup lang="ts">
-interface TalentEffect {
-  chance: string
-  effect: string
-}
+import type { FormattedTalent } from '~~/shared/types/ranger'
 
-interface TalentView {
-  description: string
-  triggerChance: string
-  condition: string
-  effects: TalentEffect[]
-  enhancements: string[]
-}
-
-const props = defineProps<{ value: unknown }>()
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : null
-}
-
-function text(record: Record<string, unknown>, key: string): string {
-  return typeof record[key] === 'string' ? record[key] : '—'
-}
-
-const talent = computed<TalentView | null>(() => {
-  const root = asRecord(props.value)
-  const main = root ? asRecord(root['主要才能']) : null
-  if (!root || !main) return null
-
-  const effectValue = main['增益效果']
-  const effects: TalentEffect[] = Array.isArray(effectValue)
-    ? effectValue.flatMap((item) => {
-        const effect = asRecord(item)
-        return effect ? [{ chance: text(effect, '觸發機率'), effect: text(effect, '效果') }] : []
-      })
-    : []
-  const enhancementsValue = root['強化才能']
-
-  return {
-    description: text(main, '敘述'),
-    triggerChance: text(main, '觸發機率'),
-    condition: text(main, '條件'),
-    effects,
-    enhancements: Array.isArray(enhancementsValue)
-      ? enhancementsValue.filter((item): item is string => typeof item === 'string')
-      : [],
-  }
-})
+defineProps<{
+  talent: FormattedTalent | null
+}>()
 </script>
 
 <template>

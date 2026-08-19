@@ -18,7 +18,7 @@ function parseCliArgs(args: string[]): CliOptions {
   const options: CliOptions = {
     dryRun: false,
     force: false,
-    concurrency: 15,
+    concurrency: 10,
     sourceUrl: process.env.SOURCE_API_URL || 'https://rangerbook.warmycat.com/res/Rangers_data.json',
     imageOrigin: process.env.IMAGE_ORIGIN || DEFAULT_RANGER_IMAGE_ORIGIN,
     help: false,
@@ -71,7 +71,7 @@ RangerX 圖片批次同步工具 (Sync Images to Cloudflare R2 / Local)
   --dry-run              僅測試抓取與分析，不上傳至 R2
   --force                強制重新下載與上傳（即使 R2 或本機已存在）
   --local-dir <path>     將下載的圖片同時保存至本機目錄（例如 ./dist-images）
-  --concurrency <num>    並發下載/上傳數量（預設 15）
+  --concurrency <num>    並發下載/上傳數量（預設 10）
   --limit <num>          限制處理的角色數量（用於測試）
   --source <url>         覆寫角色資料來源 JSON 網址
   --origin <url>         覆寫圖片來源基底網址（預設 https://res.warmycat.com）
@@ -94,6 +94,7 @@ async function fetchWithRetry(url: string, retries = 3): Promise<Uint8Array> {
     try {
       const response = await fetch(url, {
         headers: { 'User-Agent': 'RangerX-Image-Sync/1.0' },
+        signal: AbortSignal.timeout(8000), // 8 秒超時，防止遠端掛起
       })
       if (!response.ok) {
         throw new Error(`HTTP ${response.status} ${response.statusText}`)
@@ -110,10 +111,10 @@ async function fetchWithRetry(url: string, retries = 3): Promise<Uint8Array> {
 }
 
 function getR2Client(): { client: S3Client; bucket: string } | null {
-  const accountId = process.env.R2_ACCOUNT_ID
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID
-  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
-  const bucket = process.env.R2_BUCKET_NAME || 'rangerx-images'
+  const accountId = process.env.R2_ACCOUNT_ID?.trim().replace(/^["']|["']$/g, '')
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID?.trim().replace(/^["']|["']$/g, '')
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY?.trim().replace(/^["']|["']$/g, '')
+  const bucket = (process.env.R2_BUCKET_NAME || 'rangerx-images').trim().replace(/^["']|["']$/g, '')
 
   if (!accountId || !accessKeyId || !secretAccessKey) {
     return null
@@ -133,7 +134,9 @@ function getR2Client(): { client: S3Client; bucket: string } | null {
 
 async function checkR2ObjectExists(client: S3Client, bucket: string, key: string): Promise<boolean> {
   try {
-    await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }))
+    await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }), {
+      abortSignal: AbortSignal.timeout(8000),
+    })
     return true
   }
   catch (error: unknown) {
@@ -182,6 +185,7 @@ async function main() {
   console.log('⏳ 正在抓取角色資料清單...')
   const sourceResponse = await fetch(options.sourceUrl, {
     headers: { accept: 'application/json' },
+    signal: AbortSignal.timeout(15000),
   })
   if (!sourceResponse.ok) {
     throw new Error(`無法取得來源資料: HTTP ${sourceResponse.status}`)
@@ -218,6 +222,12 @@ async function main() {
   const startTime = Date.now()
   let index = 0
 
+  function renderProgress() {
+    const processed = stats.uploaded + stats.skipped + stats.savedLocal + stats.failed + (options.dryRun ? stats.downloaded : 0)
+    const pct = ((processed / stats.total) * 100).toFixed(1)
+    process.stdout.write(`\r⏳ 進度: [${processed}/${stats.total}] (${pct}%) | ☁️ 已上傳: ${stats.uploaded} | ⏩ 已跳過: ${stats.skipped} | 📥 下載: ${stats.downloaded} | ❌ 失敗: ${stats.failed}`)
+  }
+
   // 2. 建立並發執行 Worker Pool
   async function worker() {
     while (index < rangerIds.length) {
@@ -238,6 +248,7 @@ async function main() {
           const exists = await checkR2ObjectExists(r2.client, r2.bucket, s3Key)
           if (exists) {
             stats.skipped++
+            renderProgress()
             continue
           }
           shouldDownload = true
@@ -252,10 +263,11 @@ async function main() {
 
         if (!shouldDownload && !options.force) {
           stats.skipped++
+          renderProgress()
           continue
         }
 
-        // 下載圖片
+        // 下載圖片 (帶超時與重試)
         const imageBytes = await fetchWithRetry(sourceImageUrl)
         stats.downloaded++
 
@@ -268,7 +280,7 @@ async function main() {
           stats.savedLocal++
         }
 
-        // 上傳至 Cloudflare R2
+        // 上傳至 Cloudflare R2 (帶超時)
         if (r2 && !options.dryRun) {
           await r2.client.send(new PutObjectCommand({
             Bucket: r2.bucket,
@@ -276,17 +288,17 @@ async function main() {
             Body: imageBytes,
             ContentType: 'image/png',
             CacheControl: 'public, max-age=31536000, immutable',
-          }))
+          }), {
+            abortSignal: AbortSignal.timeout(12000),
+          })
           stats.uploaded++
         }
 
-        const processed = stats.uploaded + stats.skipped + stats.savedLocal + stats.failed + (options.dryRun ? stats.downloaded : 0)
-        if (processed % 25 === 0 || processed === stats.total) {
-          process.stdout.write(`\r⏳ 進度: [${processed}/${stats.total}] (已下載: ${stats.downloaded} | 上傳: ${stats.uploaded} | 跳過: ${stats.skipped} | 失敗: ${stats.failed})`)
-        }
+        renderProgress()
       }
       catch (error) {
         stats.failed++
+        renderProgress()
         console.error(`\n❌ [${rangerId}] 處理失敗: ${(error as Error).message}`)
       }
     }

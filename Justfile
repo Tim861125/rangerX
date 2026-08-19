@@ -6,7 +6,9 @@ default:
 
 # 安裝依賴
 install:
+    git pull
     bun install
+    bun run db:migrate:local
 
 # 啟動 Nuxt 開發環境（含本機 D1）
 dev:
@@ -50,4 +52,10 @@ deploy-dry:
 
 # 套用遠端 migration 並部署
 deploy:
+    bun run deploy
+
+# git push → 遠端 DB migrate → 部署（一鍵完成）
+# 使用方式：just release "commit message"
+release MSG:
+    git add -A && git commit -m "{{MSG}}" && git push
     bun run deploy

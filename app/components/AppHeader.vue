@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { AlertCircle, CheckSquare, Database, LayoutGrid, Loader2, RefreshCw, RotateCcw, ShieldCheck } from '@lucide/vue'
+import { AlertCircle, CheckSquare, Database, LayoutGrid, Loader2, Moon, RefreshCw, RotateCcw, ShieldCheck, Sun } from '@lucide/vue'
+import { useDark, useToggle } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 import type { SyncResultResponse, SyncStatusResponse } from '~~/shared/types/ranger'
 import { formatSyncDateTime } from '~~/shared/utils/sync-status'
@@ -9,6 +10,15 @@ const dialogOpen = ref(false)
 const token = ref('')
 const isUpdating = ref(false)
 const { data: syncResponse, refresh: refreshStatus } = await useFetch<SyncStatusResponse>('/api/sync/GetStatus' as string)
+
+const isDark = useDark({
+  selector: 'html',
+  attribute: 'class',
+  valueDark: 'dark',
+  valueLight: '',
+  initialValue: 'dark',
+})
+const toggleTheme = useToggle(isDark)
 
 const status = computed(() => syncResponse.value?.data)
 const isRunning = computed(() => status.value?.status === 'running')
@@ -116,47 +126,64 @@ async function updateRangers(force = false): Promise<void> {
 </script>
 
 <template>
-  <header class="sticky top-0 z-40 border-b border-border/70 bg-background/88 backdrop-blur-xl">
-    <div class="mx-auto flex h-16 max-w-[1480px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+  <header class="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-xl transition-colors">
+    <div class="mx-auto flex h-16 max-w-[1480px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
       <NuxtLink to="/" class="group flex min-w-0 items-center gap-3" aria-label="回到 RangerX 首頁">
-        <div class="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-sm font-black tracking-tighter text-primary-foreground shadow-sm shadow-primary/20 transition-transform group-hover:-rotate-3">
+        <div class="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-sm font-black tracking-tighter text-primary-foreground shadow-sm shadow-primary/30 transition-transform group-hover:scale-105 font-mono">
           RX
         </div>
         <div class="min-w-0">
-          <p class="truncate text-sm font-bold leading-none tracking-tight sm:text-base">RangerX</p>
-          <p class="mt-1 hidden text-[11px] leading-none text-muted-foreground sm:block">LINE Rangers Database</p>
+          <div class="flex items-center gap-2">
+            <p class="truncate text-sm font-bold leading-none tracking-tight sm:text-base">RangerX</p>
+            <span class="hidden rounded border border-primary/40 bg-primary/10 px-1.5 py-0.5 text-[10px] font-mono font-medium text-primary sm:inline-block">HUD_v2</span>
+          </div>
+          <p class="mt-1 hidden text-[11px] font-mono leading-none text-muted-foreground sm:block">LINE_RANGERS.DB</p>
         </div>
       </NuxtLink>
 
       <!-- 導覽頁面切換 -->
-      <nav class="flex items-center gap-1 sm:gap-1.5 rounded-full border border-border/80 bg-muted/60 p-1 text-xs font-medium sm:text-sm">
+      <nav class="flex items-center gap-1 rounded-lg border border-border/90 bg-muted/70 p-1 text-xs font-medium sm:text-sm">
         <NuxtLink
           to="/"
-          class="flex items-center gap-1.5 rounded-full px-3 py-1 sm:px-3.5 sm:py-1.5 transition-all"
-          :class="route.path === '/' ? 'bg-background font-semibold text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'"
+          class="flex items-center gap-1.5 rounded-md px-3 py-1.5 sm:px-3.5 transition-all"
+          :class="route.path === '/' ? 'bg-card font-semibold text-foreground shadow-xs border border-border/80 text-primary' : 'text-muted-foreground hover:text-foreground'"
         >
           <LayoutGrid class="size-3.5 sm:size-4" />
           <span>角色一覽</span>
         </NuxtLink>
         <NuxtLink
           to="/collection"
-          class="flex items-center gap-1.5 rounded-full px-3 py-1 sm:px-3.5 sm:py-1.5 transition-all"
-          :class="route.path.startsWith('/collection') ? 'bg-background font-semibold text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'"
+          class="flex items-center gap-1.5 rounded-md px-3 py-1.5 sm:px-3.5 transition-all"
+          :class="route.path.startsWith('/collection') ? 'bg-card font-semibold text-foreground shadow-xs border border-border/80 text-primary' : 'text-muted-foreground hover:text-foreground'"
         >
           <CheckSquare class="size-3.5 sm:size-4" />
           <span>收集簿</span>
         </NuxtLink>
       </nav>
 
-      <Dialog v-model:open="dialogOpen">
-        <DialogTrigger as-child>
-          <Button variant="outline" size="sm" class="h-9 gap-2 rounded-full bg-background/80 px-3 sm:px-4">
-            <RefreshCw class="size-3.5" :class="{ 'animate-spin': isRunning }" />
-            <span class="hidden max-w-44 truncate sm:inline">{{ statusLabel }}</span>
-            <span class="sm:hidden">更新</span>
-          </Button>
-        </DialogTrigger>
-        <DialogContent class="max-w-md rounded-2xl sm:rounded-2xl">
+      <!-- 右側功能按鈕：主題切換與資料更新 -->
+      <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          class="size-9 rounded-lg border-border/80 bg-card hover:bg-muted"
+          :title="isDark ? '切換為亮色模式' : '切換為暗色模式'"
+          aria-label="切換主題"
+          @click="toggleTheme()"
+        >
+          <Sun v-if="isDark" class="size-4 text-amber-400 transition-transform duration-200 hover:rotate-45" />
+          <Moon v-else class="size-4 text-primary transition-transform duration-200 hover:-rotate-12" />
+        </Button>
+
+        <Dialog v-model:open="dialogOpen">
+          <DialogTrigger as-child>
+            <Button variant="outline" size="sm" class="h-9 gap-2 rounded-lg border-border/80 bg-card px-3 sm:px-4 font-mono text-xs">
+              <RefreshCw class="size-3.5" :class="{ 'animate-spin': isRunning }" />
+              <span class="hidden max-w-44 truncate sm:inline">{{ statusLabel }}</span>
+              <span class="sm:hidden">更新</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent class="max-w-md rounded-xl border border-border bg-card sm:rounded-xl">
           <DialogHeader>
             <DialogTitle class="flex items-center gap-2">
               <Database class="size-5 text-primary" />
@@ -250,6 +277,7 @@ async function updateRangers(force = false): Promise<void> {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   </header>
 </template>

@@ -173,41 +173,41 @@ async function toggleStatus(rangerId: string): Promise<void> {
       <div>
         <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <h1 id="results-heading" class="text-lg font-bold tracking-tight sm:text-xl">收集卡牌</h1>
-          <span class="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-            收集率 {{ stats.obtainedPercentage }}%
+          <span class="rounded border border-primary/40 bg-primary/10 px-2 py-0.5 font-mono text-xs font-bold text-primary shadow-[0_0_10px_rgba(56,189,248,0.2)]">
+            RATE: {{ stats.obtainedPercentage }}%
           </span>
-          <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span class="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600 dark:text-amber-400">
-              <Sparkles class="size-3" /> 已擁有 {{ stats.obtained }}
+          <div class="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+            <span class="inline-flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-400">
+              <Sparkles class="size-3" /> OWNED: {{ stats.obtained }}
             </span>
-            <span class="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 class="size-3" /> 已打勾 {{ stats.checked }}
+            <span class="inline-flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-400">
+              <CheckCircle2 class="size-3" /> CHECKED: {{ stats.checked }}
             </span>
-            <span class="hidden sm:inline">· 共 {{ stats.total }} 隻</span>
+            <span class="hidden sm:inline font-mono">/ TOTAL: {{ stats.total }}</span>
           </div>
         </div>
-        <p class="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-          <template v-if="status === 'pending'">正在查詢資料…</template>
+        <p class="mt-1 text-xs text-muted-foreground font-mono">
+          <template v-if="status === 'pending'">QUERYING_COLLECTION_DATABASE...</template>
           <template v-else>
-            共 {{ pagination.total.toLocaleString() }} 筆符合條件 · 點擊卡片循環切換：未擁有 ➔ 已擁有 ➔ 已打勾
+            MATCHED: [ {{ pagination.total.toLocaleString() }} UNITS ] · CYCLE_MODE: UNOWNED ➔ OWNED ➔ CHECKED
           </template>
         </p>
       </div>
 
       <div class="flex items-center gap-2 sm:gap-2.5">
         <!-- 搜尋與篩選列 -->
-        <div class="group relative flex items-center rounded-full border border-border bg-background px-3.5 py-1.5 shadow-2xs hover:shadow-xs transition-shadow flex-1 md:w-72 lg:w-80">
-          <Search class="shrink-0 size-4 text-muted-foreground mr-2" />
+        <div class="group relative flex items-center rounded-lg border border-border/90 bg-card px-3 py-1.5 shadow-2xs transition-all focus-within:border-primary/90 focus-within:shadow-[0_0_12px_rgba(56,189,248,0.2)] flex-1 md:w-72 lg:w-80">
+          <Search class="shrink-0 size-4 text-muted-foreground mr-2 group-focus-within:text-primary transition-colors" />
           <Input
             v-model="searchInput"
             aria-label="搜尋收集簿 Ranger"
             placeholder="搜尋名稱、ID、技能…"
-            class="h-7 border-0 bg-transparent p-0 shadow-none text-sm focus-visible:ring-0 focus-visible:outline-none flex-1 min-w-0"
+            class="h-7 border-0 bg-transparent p-0 shadow-none text-sm font-sans placeholder:text-muted-foreground/70 focus-visible:ring-0 focus-visible:outline-none flex-1 min-w-0"
           />
           <button
             v-if="searchInput"
             type="button"
-            class="shrink-0 grid size-5 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground mr-1"
+            class="shrink-0 grid size-5 place-items-center rounded text-muted-foreground hover:bg-muted hover:text-foreground mr-1"
             aria-label="清除搜尋"
             @click="clearSearch"
           >
@@ -217,21 +217,24 @@ async function toggleStatus(rangerId: string): Promise<void> {
             <DialogTrigger as-child>
               <button
                 type="button"
-                class="shrink-0 grid size-7 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground relative"
+                class="shrink-0 grid size-7 place-items-center rounded text-muted-foreground hover:bg-muted hover:text-foreground relative transition-colors"
                 aria-label="篩選設定"
               >
-                <Settings class="size-4" :class="{ 'text-foreground': activeFilterCount > 0 }" />
+                <Settings class="size-4" :class="{ 'text-primary': activeFilterCount > 0 }" />
                 <span
                   v-if="activeFilterCount"
-                  class="absolute -right-0.5 -top-0.5 grid size-4 place-items-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground shadow"
+                  class="absolute -right-0.5 -top-0.5 grid size-4 place-items-center rounded-full bg-primary text-[9px] font-mono font-bold text-primary-foreground shadow"
                 >
                   {{ activeFilterCount }}
                 </span>
               </button>
             </DialogTrigger>
-            <DialogContent class="max-w-md rounded-2xl sm:rounded-2xl">
+            <DialogContent class="max-w-md rounded-xl border border-border bg-card sm:rounded-xl">
               <DialogHeader class="text-left">
-                <DialogTitle>篩選收集簿</DialogTitle>
+                <DialogTitle class="flex items-center gap-2">
+                  <SlidersHorizontal class="size-4 text-primary" />
+                  篩選收集簿
+                </DialogTitle>
                 <DialogDescription>依照收集狀態、星數、類型或屬性篩選。</DialogDescription>
               </DialogHeader>
               <ScrollArea class="max-h-[58dvh] pr-2">
@@ -252,10 +255,10 @@ async function toggleStatus(rangerId: string): Promise<void> {
 
         <!-- 排序選單 -->
         <Select v-model="sort">
-          <SelectTrigger class="w-[124px] shrink-0 bg-background sm:w-[144px]">
+          <SelectTrigger class="w-[124px] shrink-0 rounded-lg border-border/90 bg-card sm:w-[144px] font-mono text-xs">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent align="end">
+          <SelectContent align="end" class="rounded-lg border-border bg-card">
             <SelectItem value="newest">最新登場</SelectItem>
             <SelectItem value="oldest">最早登場</SelectItem>
             <SelectItem value="health-desc">體力最高</SelectItem>
@@ -268,69 +271,70 @@ async function toggleStatus(rangerId: string): Promise<void> {
       </div>
     </div>
 
-      <!-- 讀取骨架屏 -->
-      <div v-if="status === 'pending'" class="grid grid-cols-4 min-[420px]:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 xl:grid-cols-16 gap-1.5 sm:gap-2">
-        <div v-for="index in 160" :key="index" class="aspect-square w-full animate-pulse rounded-lg sm:rounded-xl border border-border/30 bg-muted/40" />
-      </div>
+    <!-- 讀取骨架屏 -->
+    <div v-if="status === 'pending'" class="grid grid-cols-4 min-[420px]:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 xl:grid-cols-16 gap-1.5 sm:gap-2">
+      <div v-for="index in 160" :key="index" class="aspect-square w-full animate-pulse rounded-lg border border-border/40 bg-card/60" />
+    </div>
 
-      <!-- 錯誤狀態 -->
-      <Card v-else-if="error" class="border-destructive/30 py-10 text-center">
-        <CardContent>
-          <p class="font-semibold text-destructive">無法讀取收集簿資料</p>
-          <p class="mt-2 text-sm text-muted-foreground">請確認已套用 D1 migration，或稍後再試。</p>
-        </CardContent>
-      </Card>
+    <!-- 錯誤狀態 -->
+    <Card v-else-if="error" class="border-destructive/30 bg-card/90 py-10 text-center rounded-xl">
+      <CardContent>
+        <p class="font-semibold text-destructive">無法讀取收集簿資料</p>
+        <p class="mt-2 text-sm text-muted-foreground">請確認已套用 D1 migration，或稍後再試。</p>
+      </CardContent>
+    </Card>
 
-      <!-- 卡片列表 (響應式欄位) -->
-      <div v-else-if="rangers.length" class="grid grid-cols-4 min-[420px]:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 xl:grid-cols-16 gap-1.5 sm:gap-2">
-        <RangerCard
-          v-for="ranger in rangers"
-          :key="ranger.rangerId"
-          :ranger="ranger"
-          mode="collection"
-          :status="statuses[ranger.rangerId] || 0"
-          @toggle="toggleStatus"
-        />
-      </div>
+    <!-- 卡片列表 (響應式欄位) -->
+    <div v-else-if="rangers.length" class="grid grid-cols-4 min-[420px]:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 xl:grid-cols-16 gap-1.5 sm:gap-2">
+      <RangerCard
+        v-for="ranger in rangers"
+        :key="ranger.rangerId"
+        :ranger="ranger"
+        mode="collection"
+        :status="statuses[ranger.rangerId] || 0"
+        @toggle="toggleStatus"
+      />
+    </div>
 
-      <!-- 空資料狀態 -->
-      <Card v-else class="border-dashed py-12 text-center">
-        <CardContent class="flex flex-col items-center">
-          <div class="grid size-12 place-items-center rounded-full bg-muted">
-            <Search class="size-5 text-muted-foreground" />
-          </div>
-          <p class="mt-4 font-semibold">找不到符合條件的 Ranger</p>
-          <p class="mt-1 text-sm text-muted-foreground">試著縮短關鍵字或清除篩選條件。</p>
-          <Button variant="outline" size="sm" class="mt-4 gap-1.5" @click="resetAllFilters">
-            <RotateCcw class="size-3.5" />
-            重設所有篩選
-          </Button>
-        </CardContent>
-      </Card>
-
-      <!-- 分頁導覽 -->
-      <nav v-if="pagination.totalPages > 1" class="mt-8 flex items-center justify-between border-t pt-6" aria-label="分頁">
-        <Button variant="outline" size="sm" :disabled="page <= 1" class="gap-1" @click="previousPage">
-          <ChevronLeft class="size-4" />
-          上一頁
-        </Button>
-        <div class="flex items-center gap-1">
-          <Button
-            v-for="pageNumber in pageNumbers()"
-            :key="pageNumber"
-            :variant="pageNumber === page ? 'default' : 'ghost'"
-            size="icon-sm"
-            :aria-current="pageNumber === page ? 'page' : undefined"
-            @click="page = pageNumber; scrollToResults()"
-          >
-            {{ pageNumber }}
-          </Button>
-          <span class="ml-2 hidden text-xs text-muted-foreground sm:inline">/ {{ pagination.totalPages }} 頁</span>
+    <!-- 空資料狀態 -->
+    <Card v-else class="border-dashed border-border/80 bg-card/60 py-12 text-center rounded-xl">
+      <CardContent class="flex flex-col items-center">
+        <div class="grid size-12 place-items-center rounded-lg border border-border bg-muted/60">
+          <Search class="size-5 text-muted-foreground" />
         </div>
-        <Button variant="outline" size="sm" :disabled="page >= pagination.totalPages" class="gap-1" @click="nextPage">
-          下一頁
-          <ChevronRight class="size-4" />
+        <p class="mt-4 font-semibold">找不到符合條件的 Ranger</p>
+        <p class="mt-1 text-sm text-muted-foreground">試著縮短關鍵字或清除篩選條件。</p>
+        <Button variant="outline" size="sm" class="mt-4 gap-1.5 rounded-lg font-mono text-xs border-border/80 bg-card" @click="resetAllFilters">
+          <RotateCcw class="size-3.5" />
+          RESET_ALL_FILTERS
         </Button>
-      </nav>
+      </CardContent>
+    </Card>
+
+    <!-- 分頁導覽 -->
+    <nav v-if="pagination.totalPages > 1" class="mt-8 flex items-center justify-between border-t border-border/80 pt-6" aria-label="分頁">
+      <Button variant="outline" size="sm" :disabled="page <= 1" class="gap-1 rounded-lg font-mono text-xs border-border/80 bg-card" @click="previousPage">
+        <ChevronLeft class="size-4" />
+        PREV
+      </Button>
+      <div class="flex items-center gap-1 font-mono">
+        <Button
+          v-for="pageNumber in pageNumbers()"
+          :key="pageNumber"
+          :variant="pageNumber === page ? 'default' : 'ghost'"
+          size="icon-sm"
+          class="rounded-lg text-xs"
+          :aria-current="pageNumber === page ? 'page' : undefined"
+          @click="page = pageNumber; scrollToResults()"
+        >
+          {{ pageNumber }}
+        </Button>
+        <span class="ml-2 hidden text-xs text-muted-foreground sm:inline">/ {{ pagination.totalPages }} PAGES</span>
+      </div>
+      <Button variant="outline" size="sm" :disabled="page >= pagination.totalPages" class="gap-1 rounded-lg font-mono text-xs border-border/80 bg-card" @click="nextPage">
+        NEXT
+        <ChevronRight class="size-4" />
+      </Button>
+    </nav>
   </div>
 </template>

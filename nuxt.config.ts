@@ -27,11 +27,11 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      htmlAttrs: { lang: 'zh-Hant' },
+      htmlAttrs: { lang: 'zh-Hant', class: 'dark' },
       title: 'RangerX｜LINE Rangers 資料庫',
       meta: [
         { name: 'description', content: '快速搜尋、篩選並比較 LINE Rangers 角色資料。' },
-        { name: 'theme-color', content: '#0f766e' },
+        { name: 'theme-color', content: '#12151c' },
       ],
     },
   },

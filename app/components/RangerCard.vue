@@ -88,17 +88,23 @@ const statusTitle = computed(() => {
     class="group relative block aspect-square w-full select-none text-left focus-visible:outline-none"
     :class="[
       mode === 'collection' && 'cursor-pointer',
-      mode === 'collection' && status === 0 && 'opacity-40 grayscale hover:opacity-80 hover:grayscale-0 transition-all duration-200',
-      mode === 'collection' && status === 1 && 'opacity-100 transition-all duration-200 ring-1 ring-primary/40',
-      mode === 'collection' && status === 2 && 'opacity-100 transition-all duration-200 ring-2 ring-emerald-500/80',
+      mode === 'collection' && status === 0 && 'opacity-40 grayscale hover:opacity-85 hover:grayscale-0 transition-all duration-200',
+      mode === 'collection' && status === 1 && 'opacity-100 transition-all duration-200 ring-2 ring-primary/60 shadow-[0_0_8px_rgba(56,189,248,0.25)]',
+      mode === 'collection' && status === 2 && 'opacity-100 transition-all duration-200 ring-2 ring-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.35)]',
     ]"
     @click="mode === 'collection' ? $emit('toggle', ranger.rangerId) : undefined"
   >
-    <!-- 卡牌主體邊框與漸層背景 -->
+    <!-- 卡牌主體邊框與漸層背景 (HUD Tech Container) -->
     <div
-      class="relative size-full overflow-hidden rounded-lg sm:rounded-xl border-[1.5px] shadow-sm transition-all duration-150 group-hover:-translate-y-0.5 group-hover:scale-[1.06] group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-primary"
+      class="relative size-full overflow-hidden rounded-lg border border-border/80 shadow-sm transition-all duration-150 group-hover:-translate-y-0.5 group-hover:scale-[1.06] group-hover:border-primary/90 group-hover:shadow-[0_0_14px_rgba(56,189,248,0.28)] group-focus-visible:ring-2 group-focus-visible:ring-primary"
       :class="cardBackground"
     >
+      <!-- HUD 角標裝飾 (Tech Corner Brackets) -->
+      <span class="pointer-events-none absolute left-0.5 top-0.5 size-1.5 border-l-[1.5px] border-t-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
+      <span class="pointer-events-none absolute right-0.5 top-0.5 size-1.5 border-r-[1.5px] border-t-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
+      <span class="pointer-events-none absolute bottom-0.5 left-0.5 size-1.5 border-b-[1.5px] border-l-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
+      <span class="pointer-events-none absolute bottom-0.5 right-0.5 size-1.5 border-b-[1.5px] border-r-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
+
       <!-- 頂部中央水平星星排列 (如同遊戲卡牌) -->
       <div class="pointer-events-none absolute inset-x-0 top-1 sm:top-1.5 z-20 flex items-center justify-center">
         <StarDisplay
@@ -108,17 +114,17 @@ const statusTitle = computed(() => {
         />
       </div>
 
-      <!-- 角色立繪置中填滿 -->
+      <!-- 角色立繪置中填滿 (原圖維持原狀) -->
       <div class="absolute inset-0 flex items-center justify-center p-1.5 pt-3.5 sm:pt-4 pb-1">
         <img
           v-if="!imageFailed"
           :src="currentImageSrc"
           :alt="ranger.name"
           loading="lazy"
-          class="size-full object-contain drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.35)] transition-transform duration-200 group-hover:scale-110"
+          class="size-full object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] transition-transform duration-200 group-hover:scale-110"
           @error="handleImageError"
         >
-        <div v-else class="text-[9px] font-bold text-white/60">
+        <div v-else class="text-[9px] font-mono font-bold text-white/70">
           {{ ranger.name.slice(0, 2) }}
         </div>
       </div>
@@ -135,7 +141,7 @@ const statusTitle = computed(() => {
       <!-- 右上角 NFT / 降臨角標籤 (若有且未打勾覆蓋) -->
       <div
         v-if="(ranger.nft || ranger.advent) && !(mode === 'collection' && status === 2)"
-        class="absolute top-1 right-1 z-20 rounded px-1 py-0.5 text-[7px] sm:text-[8px] font-black uppercase tracking-wider text-white shadow"
+        class="absolute top-1 right-1 z-20 rounded border border-white/40 px-1 py-0.5 text-[7px] sm:text-[8px] font-mono font-black uppercase tracking-wider text-white shadow-sm"
         :class="ranger.nft ? 'bg-violet-600' : 'bg-amber-600'"
       >
         {{ ranger.nft ? 'NFT' : '降臨' }}
@@ -157,7 +163,7 @@ const statusTitle = computed(() => {
       />
 
       <!-- 卡牌微光立體漸層覆蓋 -->
-      <div class="pointer-events-none absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-b from-white/10 via-transparent to-black/20" />
+      <div class="pointer-events-none absolute inset-0 rounded-lg bg-gradient-to-b from-white/10 via-transparent to-black/25" />
     </div>
   </component>
 </template>

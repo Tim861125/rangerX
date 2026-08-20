@@ -269,3 +269,117 @@ export function formatRangerRecord(raw: RangerSourceRecord, imageOrigin?: string
     talent: formatTalent(raw['才能']),
   }
 }
+
+export interface ParsedRangerId {
+  unitNo: number
+  suffix: string
+  slug: string
+}
+
+export function parseRangerId(rangerId: string): ParsedRangerId {
+  const match = rangerId.match(/^u(\d+)([a-z]*)?(?:-(.*))?$/i)
+  if (!match) {
+    return { unitNo: 0, suffix: '', slug: rangerId }
+  }
+  return {
+    unitNo: Number.parseInt(match[1] || '0', 10),
+    suffix: (match[2] || '').toLowerCase(),
+    slug: (match[3] || '').toLowerCase(),
+  }
+}
+
+export function getFormRank(suffix: string, evolutionType: EvolutionType, starCount: number): number {
+  if (starCount === 9) return 90
+  if (starCount === 8) {
+    if (evolutionType === 0 || suffix === 'h') return 81
+    if (evolutionType === 1 || suffix === 'u') return 82
+    return 80
+  }
+  return starCount * 10
+}
+
+export function computeRangerEvolutionGroups(
+  records: Array<{ rangerId: string, releasedAt?: string, starCount: number, evolutionType?: EvolutionType }>,
+): Map<string, { unitNo: number, groupNo: number, formRank: number }> {
+  const parsedList = records.map((r) => {
+    const parsed = parseRangerId(r.rangerId)
+    return {
+      rangerId: r.rangerId,
+      unitNo: parsed.unitNo,
+      suffix: parsed.suffix,
+      slug: parsed.slug,
+      releasedAt: r.releasedAt || '',
+      starCount: r.starCount,
+      evolutionType: r.evolutionType ?? null,
+    }
+  })
+
+  const slugNumMap = new Map<string, typeof parsedList>()
+  for (const item of parsedList) {
+    const key = `${item.unitNo}:${item.slug}`
+    const list = slugNumMap.get(key)
+    if (list) {
+      list.push(item)
+    }
+    else {
+      slugNumMap.set(key, [item])
+    }
+  }
+
+  const parent = new Map<string, string>()
+  function find(nodeKey: string): string {
+    const p = parent.get(nodeKey)
+    if (!p || p === nodeKey) return nodeKey
+    const root = find(p)
+    parent.set(nodeKey, root)
+    return root
+  }
+
+  function union(nodeA: string, nodeB: string, unitA: number, unitB: number) {
+    const rootA = find(nodeA)
+    const rootB = find(nodeB)
+    if (rootA !== rootB) {
+      const rootUnitA = Number.parseInt(rootA.split(':')[0] || `${unitA}`, 10)
+      const rootUnitB = Number.parseInt(rootB.split(':')[0] || `${unitB}`, 10)
+      if (rootUnitA <= rootUnitB) {
+        parent.set(rootB, rootA)
+      }
+      else {
+        parent.set(rootA, rootB)
+      }
+    }
+  }
+
+  for (const item of parsedList) {
+    const nodeKey = `${item.unitNo}:${item.slug}`
+    const prevKey = `${item.unitNo - 1}:${item.slug}`
+    const prevItems = slugNumMap.get(prevKey)
+    if (prevItems) {
+      for (const prev of prevItems) {
+        if (
+          (item.starCount === 9 && prev.starCount === 8)
+          || (item.releasedAt === prev.releasedAt && item.starCount === prev.starCount + 1)
+        ) {
+          union(prevKey, nodeKey, prev.unitNo, item.unitNo)
+        }
+      }
+    }
+  }
+
+  const result = new Map<string, { unitNo: number, groupNo: number, formRank: number }>()
+  for (const item of parsedList) {
+    const nodeKey = `${item.unitNo}:${item.slug}`
+    const rootKey = find(nodeKey)
+    const rootUnitNo = Number.parseInt(rootKey.split(':')[0] || `${item.unitNo}`, 10)
+    const formRank = getFormRank(item.suffix, item.evolutionType, item.starCount)
+    result.set(item.rangerId, {
+      unitNo: item.unitNo,
+      groupNo: rootUnitNo,
+      formRank,
+    })
+  }
+
+  return result
+}
+
+

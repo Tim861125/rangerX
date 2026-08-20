@@ -44,13 +44,13 @@ const querySchema = z.object({
 })
 
 const SORT_SQL: Record<RangerSort, string> = {
-  newest: 'rf.released_at DESC, rf.ranger_id DESC',
-  oldest: 'rf.released_at ASC, rf.ranger_id ASC',
-  'health-desc': 'rf.health DESC, rf.ranger_id ASC',
-  'physical-desc': 'rf.physical_attack DESC, rf.ranger_id ASC',
-  'magic-desc': 'rf.magic_attack DESC, rf.ranger_id ASC',
-  'cost-asc': 'rf.mineral_cost ASC, rf.ranger_id ASC',
-  'cost-desc': 'rf.mineral_cost DESC, rf.ranger_id ASC',
+  newest: 'rf.released_at DESC, rf.group_no DESC, rf.form_rank ASC, rf.ranger_id ASC',
+  oldest: 'rf.released_at ASC, rf.group_no ASC, rf.form_rank ASC, rf.ranger_id ASC',
+  'health-desc': 'rf.health DESC, rf.group_no DESC, rf.form_rank ASC, rf.ranger_id ASC',
+  'physical-desc': 'rf.physical_attack DESC, rf.group_no DESC, rf.form_rank ASC, rf.ranger_id ASC',
+  'magic-desc': 'rf.magic_attack DESC, rf.group_no DESC, rf.form_rank ASC, rf.ranger_id ASC',
+  'cost-asc': 'rf.mineral_cost ASC, rf.group_no ASC, rf.form_rank ASC, rf.ranger_id ASC',
+  'cost-desc': 'rf.mineral_cost DESC, rf.group_no DESC, rf.form_rank ASC, rf.ranger_id ASC',
 }
 
 function escapeLike(value: string): string {

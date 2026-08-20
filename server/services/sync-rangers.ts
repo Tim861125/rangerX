@@ -4,7 +4,7 @@ import type { RangerSourceRecord, SyncResult } from '~~/shared/types/ranger'
 import { getDatabase, getSourceUrl } from '~~/server/utils/cloudflare'
 import { parseRangerSource, readLimitedJson } from '~~/server/utils/ranger-source'
 import { mapToRawRanger } from '~~/server/utils/ranger-raw-mapper'
-import { formatRangerRecord } from '~~/shared/utils/ranger-formatter'
+import { computeRangerEvolutionGroups, formatRangerRecord } from '~~/shared/utils/ranger-formatter'
 
 const STATEMENTS_PER_BATCH = 40
 
@@ -165,10 +165,13 @@ export async function syncRangers(event: H3Event, options: SyncOptions = {}): Pr
         updated_at = unixepoch()
     `
 
+    const formattedRecords = incoming.map(r => formatRangerRecord(r))
+    const groupMetaMap = computeRangerEvolutionGroups(formattedRecords)
+
     const formattedUpsertSql = `
       INSERT INTO rangers_formatted (
         ranger_id, name, description, released_at, star_count, evolution_type,
-        is_ultimate, is_hyper, ranger_type, attribute, respawn_time,
+        is_ultimate, is_hyper, unit_no, group_no, form_rank, ranger_type, attribute, respawn_time,
         mineral_cost, attack_range, splash_range, physical_attack, magic_attack,
         physical_defense, magic_defense, health, crit_rate, crit_damage,
         hit_rate, evasion_rate, skill_hit_rate, skill_evasion_rate, skill_resist,
@@ -177,7 +180,7 @@ export async function syncRangers(event: H3Event, options: SyncOptions = {}): Pr
         skill1_json, skill2_json, abilities_json, talent_json, updated_at
       ) VALUES (
         ?, ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
         ?, ?, ?, ?, ?,
@@ -193,6 +196,9 @@ export async function syncRangers(event: H3Event, options: SyncOptions = {}): Pr
         evolution_type = excluded.evolution_type,
         is_ultimate = excluded.is_ultimate,
         is_hyper = excluded.is_hyper,
+        unit_no = excluded.unit_no,
+        group_no = excluded.group_no,
+        form_rank = excluded.form_rank,
         ranger_type = excluded.ranger_type,
         attribute = excluded.attribute,
         respawn_time = excluded.respawn_time,
@@ -227,7 +233,8 @@ export async function syncRangers(event: H3Event, options: SyncOptions = {}): Pr
 
     const statements: D1PreparedStatement[] = []
 
-    for (const record of incoming) {
+    for (let index = 0; index < incoming.length; index++) {
+      const record = incoming[index]!
       // 1. Prepare raw table insertion
       const raw = mapToRawRanger(record)
       statements.push(database.prepare(rawUpsertSql).bind(
@@ -244,7 +251,13 @@ export async function syncRangers(event: H3Event, options: SyncOptions = {}): Pr
       ))
 
       // 2. Prepare formatted table insertion
-      const fmt = formatRangerRecord(record)
+      const fmt = formattedRecords[index]!
+      const meta = groupMetaMap.get(fmt.rangerId) ?? {
+        unitNo: 0,
+        groupNo: 0,
+        formRank: getFormRank('', fmt.evolutionType, fmt.starCount),
+      }
+
       const respawnSec = Number.parseFloat(fmt.respawnTime.replace('秒', '')) || 0
       const physicalAtk = fmt.primaryStats.find(s => s.key === 'physicalAttack')?.raw ?? 0
       const magicAtk = fmt.primaryStats.find(s => s.key === 'magicAttack')?.raw ?? 0
@@ -268,6 +281,9 @@ export async function syncRangers(event: H3Event, options: SyncOptions = {}): Pr
         fmt.evolutionType,
         fmt.isUltimate ? 1 : 0,
         fmt.isHyper ? 1 : 0,
+        meta.unitNo,
+        meta.groupNo,
+        meta.formRank,
         fmt.rangerType,
         fmt.attribute,
         respawnSec,

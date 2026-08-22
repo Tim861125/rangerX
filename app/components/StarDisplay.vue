@@ -36,14 +36,14 @@ const fillColor = computed(() => {
   return '#fde047'                               // 1~8星 (一般淺黃/明亮柔黃)
 })
 
-// 尺寸微調：16欄位比例
+// 尺寸微調：9欄位比例
 const starSizeClass = computed(() => {
   if (props.mode === 'detail') {
     return isLargeStar.value ? 'size-6 sm:size-7' : 'size-4 sm:size-5'
   }
 
-  // card 16欄位模式：大星星 size-2.5~3，小星星 size-1.5~2
-  return isLargeStar.value ? 'size-2.5 sm:size-3' : 'size-1.5 sm:size-2'
+  // card 9欄位模式：大星星 size-3.5~4，小星星 size-2.5~3
+  return isLargeStar.value ? 'size-3.5 sm:size-4' : 'size-2.5 sm:size-3'
 })
 </script>
 

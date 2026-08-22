@@ -100,10 +100,10 @@ const statusTitle = computed(() => {
       :class="cardBackground"
     >
       <!-- HUD 角標裝飾 (Tech Corner Brackets) -->
-      <span class="pointer-events-none absolute left-0.5 top-0.5 size-1.5 border-l-[1.5px] border-t-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
-      <span class="pointer-events-none absolute right-0.5 top-0.5 size-1.5 border-r-[1.5px] border-t-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
-      <span class="pointer-events-none absolute bottom-0.5 left-0.5 size-1.5 border-b-[1.5px] border-l-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
-      <span class="pointer-events-none absolute bottom-0.5 right-0.5 size-1.5 border-b-[1.5px] border-r-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
+      <span class="pointer-events-none absolute left-0.5 top-0.5 size-2 border-l-[1.5px] border-t-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
+      <span class="pointer-events-none absolute right-0.5 top-0.5 size-2 border-r-[1.5px] border-t-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
+      <span class="pointer-events-none absolute bottom-0.5 left-0.5 size-2 border-b-[1.5px] border-l-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
+      <span class="pointer-events-none absolute bottom-0.5 right-0.5 size-2 border-b-[1.5px] border-r-[1.5px] border-white/60 opacity-60 transition-opacity group-hover:border-primary group-hover:opacity-100" />
 
       <!-- 頂部中央水平星星排列 (如同遊戲卡牌) -->
       <div class="pointer-events-none absolute inset-x-0 top-1 sm:top-1.5 z-20 flex items-center justify-center">
@@ -115,7 +115,7 @@ const statusTitle = computed(() => {
       </div>
 
       <!-- 角色立繪置中填滿 (原圖維持原狀) -->
-      <div class="absolute inset-0 flex items-center justify-center p-1.5 pt-3.5 sm:pt-4 pb-1">
+      <div class="absolute inset-0 flex items-center justify-center pt-4 sm:pt-5 pb-1.5 px-2">
         <img
           v-if="!imageFailed"
           :src="currentImageSrc"

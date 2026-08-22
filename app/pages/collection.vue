@@ -54,7 +54,7 @@ const requestQuery = computed(() => ({
   status: collectionStatus.value === 'all' ? undefined : collectionStatus.value,
   sort: sort.value,
   page: page.value,
-  pageSize: 160,
+  pageSize: 108,
 }))
 
 const {
@@ -72,7 +72,7 @@ const filters = computed(() => filterResponse.value?.data ?? { stars: [], types:
 const rangers = computed(() => rangerResponse.value?.data ?? [])
 const pagination = computed(() => rangerResponse.value?.pagination ?? {
   page: 1,
-  pageSize: 160,
+  pageSize: 108,
   total: 0,
   totalPages: 0,
 })
@@ -272,8 +272,8 @@ async function toggleStatus(rangerId: string): Promise<void> {
     </div>
 
     <!-- 讀取骨架屏 -->
-    <div v-if="status === 'pending'" class="grid grid-cols-4 min-[420px]:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 xl:grid-cols-16 gap-1.5 sm:gap-2">
-      <div v-for="index in 160" :key="index" class="aspect-square w-full animate-pulse rounded-lg border border-border/40 bg-card/60" />
+    <div v-if="status === 'pending'" class="grid grid-cols-3 min-[440px]:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 gap-2 sm:gap-2.5 lg:gap-3">
+      <div v-for="index in 108" :key="index" class="aspect-square w-full animate-pulse rounded-lg border border-border/40 bg-card/60" />
     </div>
 
     <!-- 錯誤狀態 -->
@@ -285,7 +285,7 @@ async function toggleStatus(rangerId: string): Promise<void> {
     </Card>
 
     <!-- 卡片列表 (響應式欄位) -->
-    <div v-else-if="rangers.length" class="grid grid-cols-4 min-[420px]:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 xl:grid-cols-16 gap-1.5 sm:gap-2">
+    <div v-else-if="rangers.length" class="grid grid-cols-3 min-[440px]:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 gap-2 sm:gap-2.5 lg:gap-3">
       <RangerCard
         v-for="ranger in rangers"
         :key="ranger.rangerId"
